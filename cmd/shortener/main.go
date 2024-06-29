@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/leary1337/url-shortener/internal/app"
 )
 
@@ -12,10 +14,11 @@ const ServerAddress = `localhost:8080`
 func main() {
 	serverHandler := app.NewServerHandler(ServerAddress)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc(`/`, serverHandler.MainPage)
+	r := chi.NewRouter()
+	r.Get(`/`, serverHandler.GetOriginalURL)
+	r.Post(`/`, serverHandler.GenerateShortURL)
 
-	err := http.ListenAndServe(ServerAddress, mux)
+	err := http.ListenAndServe(ServerAddress, r)
 	if err != nil {
 		log.Fatal(err)
 	}
