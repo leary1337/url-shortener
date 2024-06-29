@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/leary1337/url-shortener/internal/app"
 )
@@ -15,7 +16,8 @@ func main() {
 	serverHandler := app.NewServerHandler(ServerAddress)
 
 	r := chi.NewRouter()
-	r.Get(`/`, serverHandler.GetOriginalURL)
+	r.Use(middleware.Logger)
+	r.Get(`/{shortURL}`, serverHandler.GetOriginalURL)
 	r.Post(`/`, serverHandler.GenerateShortURL)
 
 	err := http.ListenAndServe(ServerAddress, r)

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 const ShortURLLength = 8
@@ -43,7 +45,7 @@ func (a *ServerHandler) GenerateShortURL(w http.ResponseWriter, r *http.Request)
 }
 
 func (a *ServerHandler) GetOriginalURL(w http.ResponseWriter, r *http.Request) {
-	shortURL := r.URL.Path[1:]
+	shortURL := chi.URLParam(r, "shortURL")
 	originalURL, ok := a.urlMap[shortURL]
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
