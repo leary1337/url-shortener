@@ -2,58 +2,36 @@ package app
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 )
 
-func TestServerHandler_MainPage(t *testing.T) {
+func TestServerHandler_GenerateShortURL(t *testing.T) {
 	type want struct {
-		code        int
-		response    string
-		contentType string
-		location    string
+		code     int
+		response string
 	}
 	tests := []struct {
-		name       string
-		method     string
-		requestURI string
-		body       string
-		want       want
+		name   string
+		method string
+		body   string
+		want   want
 	}{
 		{
-			"valid GET test #1",
-			http.MethodGet,
-			"/shortTestUrl1",
-			"",
-			want{
-				code:     http.StatusTemporaryRedirect,
-				location: "https://google.com",
-			},
-		},
-		{
-			"not found GET test #2",
-			http.MethodGet,
-			"/shortTestUrl2",
-			"",
-			want{
-				code: http.StatusNotFound,
-			},
-		},
-		{
-			"valid POST test #3",
+			"valid POST test #1",
 			http.MethodPost,
-			"/",
 			"https://google.com",
 			want{
 				code: http.StatusCreated,
 			},
 		},
 		{
-			"empty body POST test #4",
+			"empty body POST test #2",
 			http.MethodPost,
-			"/",
 			"",
 			want{
 				code: http.StatusBadRequest,
@@ -64,21 +42,84 @@ func TestServerHandler_MainPage(t *testing.T) {
 		serverAddr: "localhost:8080",
 		urlMap:     map[string]string{"shortTestUrl1": "https://google.com"},
 	}
+	ts := httptest.NewServer(ShortenerRouter(serverHandler))
+	defer ts.Close()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := httptest.NewRequest(tt.method, tt.requestURI, strings.NewReader(tt.body))
-			w := httptest.NewRecorder()
-			serverHandler.MainPage(w, r)
+			response, body := testRequest(t, ts, tt.method, `/`, strings.NewReader(tt.body))
 
-			result := w.Result()
-
-			if tt.method == http.MethodGet {
-				assert.Equal(t, tt.want.location, result.Header.Get("Location"))
-				assert.Equal(t, tt.want.code, result.StatusCode)
-			} else {
-				assert.Equal(t, tt.want.code, result.StatusCode)
-				assert.NotEmpty(t, result.Body)
+			require.Equal(t, tt.want.code, response.StatusCode)
+			if tt.want.code == http.StatusCreated {
+				assert.NotEmpty(t, body)
 			}
 		})
 	}
+}
+
+func TestServerHandler_GetOriginalURL(t *testing.T) {
+	type want struct {
+		code     int
+		location string
+	}
+	tests := []struct {
+		name       string
+		method     string
+		requestURI string
+		want       want
+	}{
+		{
+			"valid GET test #1",
+			http.MethodGet,
+			"/shortTestUrl1",
+			want{
+				code:     http.StatusTemporaryRedirect,
+				location: "https://google.com",
+			},
+		},
+		{
+			"not found GET test #2",
+			http.MethodGet,
+			"/shortTestUrl2",
+			want{
+				code: http.StatusNotFound,
+			},
+		},
+	}
+	serverHandler := &ServerHandler{
+		serverAddr: "localhost:8080",
+		urlMap:     map[string]string{"shortTestUrl1": "https://google.com"},
+	}
+
+	ts := httptest.NewServer(ShortenerRouter(serverHandler))
+	defer ts.Close()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			response, _ := testRequest(t, ts, tt.method, tt.requestURI, nil)
+
+			assert.Equal(t, tt.want.location, response.Header.Get("Location"))
+			assert.Equal(t, tt.want.code, response.StatusCode)
+		})
+	}
+}
+
+func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
+	req, err := http.NewRequest(method, ts.URL+path, body)
+	require.NoError(t, err)
+
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp, string(respBody)
 }
