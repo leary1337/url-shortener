@@ -2,6 +2,8 @@ package app
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -40,15 +42,17 @@ func TestServerHandler_GenerateShortURL(t *testing.T) {
 		serverAddr: "localhost:8080",
 		urlMap:     map[string]string{"shortTestUrl1": "https://google.com"},
 	}
+	ts := httptest.NewServer(ShortenerRouter(serverHandler))
+	defer ts.Close()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := httptest.NewRequest(tt.method, `/`, strings.NewReader(tt.body))
-			w := httptest.NewRecorder()
-			serverHandler.GenerateShortURL(w, r)
+			response, body := testRequest(t, ts, tt.method, `/`, strings.NewReader(tt.body))
 
-			result := w.Result()
-			assert.Equal(t, tt.want.code, result.StatusCode)
-			assert.NotEmpty(t, result.Body)
+			require.Equal(t, tt.want.code, response.StatusCode)
+			if tt.want.code == http.StatusCreated {
+				assert.NotEmpty(t, body)
+			}
 		})
 	}
 }
@@ -86,16 +90,36 @@ func TestServerHandler_GetOriginalURL(t *testing.T) {
 		serverAddr: "localhost:8080",
 		urlMap:     map[string]string{"shortTestUrl1": "https://google.com"},
 	}
+
+	ts := httptest.NewServer(ShortenerRouter(serverHandler))
+	defer ts.Close()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := httptest.NewRequest(tt.method, tt.requestURI, nil)
-			w := httptest.NewRecorder()
-			serverHandler.GetOriginalURL(w, r)
+			response, _ := testRequest(t, ts, tt.method, tt.requestURI, nil)
 
-			result := w.Result()
-
-			assert.Equal(t, tt.want.location, result.Header.Get("Location"))
-			assert.Equal(t, tt.want.code, result.StatusCode)
+			assert.Equal(t, tt.want.location, response.Header.Get("Location"))
+			assert.Equal(t, tt.want.code, response.StatusCode)
 		})
 	}
+}
+
+func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
+	req, err := http.NewRequest(method, ts.URL+path, body)
+	require.NoError(t, err)
+
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp, string(respBody)
 }
