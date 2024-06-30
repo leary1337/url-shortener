@@ -8,7 +8,7 @@ type Config struct {
 }
 
 const DefaultServerAddr = `localhost:8080`
-const DefaultRedirectAddr = `http://localhost:8000/`
+const DefaultRedirectAddr = `http://localhost:8080/`
 
 func NewConfig() *Config {
 	config := &Config{}

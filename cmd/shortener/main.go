@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -11,7 +10,6 @@ import (
 
 func main() {
 	c := config.NewConfig()
-	fmt.Printf("Config: %+v\n", c)
 	serverHandler := app.NewServerHandler(c)
 	err := http.ListenAndServe(c.Addr, app.ShortenerRouter(serverHandler))
 	if err != nil {
