@@ -5,13 +5,13 @@ import (
 	"net/http"
 
 	"github.com/leary1337/url-shortener/internal/app"
+	"github.com/leary1337/url-shortener/internal/app/config"
 )
 
-const ServerAddress = `localhost:8080`
-
 func main() {
-	serverHandler := app.NewServerHandler(ServerAddress)
-	err := http.ListenAndServe(ServerAddress, app.ShortenerRouter(serverHandler))
+	c := config.NewConfig()
+	serverHandler := app.NewServerHandler(c)
+	err := http.ListenAndServe(c.Addr, app.ShortenerRouter(serverHandler))
 	if err != nil {
 		log.Fatal(err)
 	}

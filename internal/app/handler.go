@@ -6,19 +6,21 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+
+	"github.com/leary1337/url-shortener/internal/app/config"
 )
 
 const ShortURLLength = 8
 
 type ServerHandler struct {
-	serverAddr string
-	urlMap     map[string]string
+	cfg    *config.Config
+	urlMap map[string]string
 }
 
-func NewServerHandler(serverAddr string) *ServerHandler {
+func NewServerHandler(cfg *config.Config) *ServerHandler {
 	return &ServerHandler{
-		serverAddr: serverAddr,
-		urlMap:     map[string]string{},
+		cfg:    cfg,
+		urlMap: map[string]string{},
 	}
 }
 
@@ -37,7 +39,7 @@ func (a *ServerHandler) GenerateShortURL(w http.ResponseWriter, r *http.Request)
 	a.urlMap[shortURL] = string(body)
 
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte(fmt.Sprintf("http://%s/%s", a.serverAddr, shortURL)))
+	_, err = w.Write([]byte(fmt.Sprintf("%s/%s", a.cfg.RedirectAddr, shortURL)))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

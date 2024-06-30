@@ -1,19 +1,23 @@
 package app
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/leary1337/url-shortener/internal/app/config"
 )
 
 func TestServerHandler_GenerateShortURL(t *testing.T) {
 	type want struct {
-		code     int
-		response string
+		code         int
+		response     string
+		redirectAddr string
 	}
 	tests := []struct {
 		name   string
@@ -26,7 +30,8 @@ func TestServerHandler_GenerateShortURL(t *testing.T) {
 			http.MethodPost,
 			"https://google.com",
 			want{
-				code: http.StatusCreated,
+				code:         http.StatusCreated,
+				redirectAddr: "http://testURL",
 			},
 		},
 		{
@@ -39,8 +44,11 @@ func TestServerHandler_GenerateShortURL(t *testing.T) {
 		},
 	}
 	serverHandler := &ServerHandler{
-		serverAddr: "localhost:8080",
-		urlMap:     map[string]string{"shortTestUrl1": "https://google.com"},
+		cfg: &config.Config{
+			Addr:         "localhost:8080",
+			RedirectAddr: "http://testURL",
+		},
+		urlMap: map[string]string{"shortTestUrl1": "https://google.com"},
 	}
 	ts := httptest.NewServer(ShortenerRouter(serverHandler))
 	defer ts.Close()
@@ -52,6 +60,9 @@ func TestServerHandler_GenerateShortURL(t *testing.T) {
 			require.Equal(t, tt.want.code, response.StatusCode)
 			if tt.want.code == http.StatusCreated {
 				assert.NotEmpty(t, body)
+			}
+			if tt.want.redirectAddr != "" {
+				assert.Contains(t, body, tt.want.redirectAddr)
 			}
 		})
 	}
@@ -87,8 +98,11 @@ func TestServerHandler_GetOriginalURL(t *testing.T) {
 		},
 	}
 	serverHandler := &ServerHandler{
-		serverAddr: "localhost:8080",
-		urlMap:     map[string]string{"shortTestUrl1": "https://google.com"},
+		cfg: &config.Config{
+			Addr:         "localhost:8080",
+			RedirectAddr: "localhost:8080",
+		},
+		urlMap: map[string]string{"shortTestUrl1": "https://google.com"},
 	}
 
 	ts := httptest.NewServer(ShortenerRouter(serverHandler))
