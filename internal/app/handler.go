@@ -39,7 +39,7 @@ func (a *ServerHandler) GenerateShortURL(w http.ResponseWriter, r *http.Request)
 	a.urlMap[shortURL] = string(body)
 
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte(fmt.Sprintf("http://%s/%s", a.cfg.RedirectAddr, shortURL)))
+	_, err = w.Write([]byte(fmt.Sprintf("%s/%s", a.cfg.RedirectAddr, shortURL)))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

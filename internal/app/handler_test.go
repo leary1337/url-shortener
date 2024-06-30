@@ -15,9 +15,9 @@ import (
 
 func TestServerHandler_GenerateShortURL(t *testing.T) {
 	type want struct {
-		code     int
-		response string
-		addr     string
+		code         int
+		response     string
+		redirectAddr string
 	}
 	tests := []struct {
 		name   string
@@ -30,8 +30,8 @@ func TestServerHandler_GenerateShortURL(t *testing.T) {
 			http.MethodPost,
 			"https://google.com",
 			want{
-				code: http.StatusCreated,
-				addr: "http://testURL",
+				code:         http.StatusCreated,
+				redirectAddr: "http://testURL",
 			},
 		},
 		{
@@ -46,7 +46,7 @@ func TestServerHandler_GenerateShortURL(t *testing.T) {
 	serverHandler := &ServerHandler{
 		cfg: &config.Config{
 			Addr:         "localhost:8080",
-			RedirectAddr: "testURL",
+			RedirectAddr: "http://testURL",
 		},
 		urlMap: map[string]string{"shortTestUrl1": "https://google.com"},
 	}
@@ -61,8 +61,8 @@ func TestServerHandler_GenerateShortURL(t *testing.T) {
 			if tt.want.code == http.StatusCreated {
 				assert.NotEmpty(t, body)
 			}
-			if tt.want.addr != "" {
-				assert.Contains(t, body, tt.want.addr)
+			if tt.want.redirectAddr != "" {
+				assert.Contains(t, body, tt.want.redirectAddr)
 			}
 		})
 	}
