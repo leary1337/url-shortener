@@ -17,17 +17,27 @@ const (
 
 func NewConfig() (*Config, error) {
 	var cfg Config
+
+	// Сначала определите все флаги.
+	flag.StringVar(&cfg.Addr, "a", "", "server address")
+	flag.StringVar(&cfg.RedirectAddr, "b", "", "redirect server address")
+
+	// Парсинг флагов перед парсингом переменных окружения, чтобы установить пустые значения.
+	flag.Parse()
+
+	// Парсинг переменных окружения.
 	err := env.Parse(&cfg)
 	if err != nil {
 		return nil, err
 	}
 
+	// Применение значений по умолчанию, если не заданы ни флаги, ни переменные окружения.
 	if cfg.Addr == "" {
-		flag.StringVar(&cfg.Addr, "a", DefaultServerAddr, "server address")
+		cfg.Addr = DefaultServerAddr
 	}
 	if cfg.RedirectAddr == "" {
-		flag.StringVar(&cfg.RedirectAddr, "b", DefaultRedirectAddr, "redirect server address")
+		cfg.RedirectAddr = DefaultRedirectAddr
 	}
-	flag.Parse()
+
 	return &cfg, nil
 }
