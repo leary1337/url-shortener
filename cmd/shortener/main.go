@@ -9,9 +9,13 @@ import (
 )
 
 func main() {
-	c := config.NewConfig()
-	serverHandler := app.NewServerHandler(c)
-	err := http.ListenAndServe(c.Addr, app.ShortenerRouter(serverHandler))
+	cfg, err := config.NewConfig()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	serverHandler := app.NewServerHandler(cfg)
+
+	err = http.ListenAndServe(cfg.Addr, app.ShortenerRouter(serverHandler))
 	if err != nil {
 		log.Fatal(err)
 	}
