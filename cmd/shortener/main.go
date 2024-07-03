@@ -9,13 +9,13 @@ import (
 )
 
 func main() {
-	c, err := config.NewConfig()
+	cfg, err := config.NewConfig()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	serverHandler := app.NewServerHandler(c)
+	serverHandler := app.NewServerHandler(cfg)
 
-	err = http.ListenAndServe(c.Addr, app.ShortenerRouter(serverHandler))
+	err = http.ListenAndServe(cfg.Addr, app.ShortenerRouter(serverHandler))
 	if err != nil {
 		log.Fatal(err)
 	}

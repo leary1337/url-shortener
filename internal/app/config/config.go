@@ -16,8 +16,8 @@ const (
 )
 
 func NewConfig() (*Config, error) {
-	var cfg *Config
-	err := env.Parse(cfg)
+	var cfg Config
+	err := env.Parse(&cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -29,5 +29,5 @@ func NewConfig() (*Config, error) {
 		flag.StringVar(&cfg.RedirectAddr, "b", DefaultRedirectAddr, "redirect server address")
 	}
 	flag.Parse()
-	return cfg, nil
+	return &cfg, nil
 }
