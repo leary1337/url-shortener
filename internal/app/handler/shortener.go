@@ -9,15 +9,18 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/leary1337/url-shortener/internal/app/service"
+	"github.com/leary1337/url-shortener/pkg/logger"
 )
 
 type ShortenerHandler struct {
+	l            logger.Interface
 	service      service.Shortener
 	redirectAddr string
 }
 
-func NewShortenerHandler(service service.Shortener, redirectAddr string) *ShortenerHandler {
+func NewShortenerHandler(l logger.Interface, service service.Shortener, redirectAddr string) *ShortenerHandler {
 	return &ShortenerHandler{
+		l:            l,
 		service:      service,
 		redirectAddr: redirectAddr,
 	}
