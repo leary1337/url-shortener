@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"github.com/leary1337/url-shortener/pkg/logger"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -28,10 +29,12 @@ func (m *MockService) ResolveURL(shortURL string) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
+var l = logger.New("info")
+
 func TestHandler_ShortenURL(t *testing.T) {
 	mockService := new(MockService)
 	redirectAddr := "http://localhost:8080"
-	handler := NewShortenerHandler(mockService, redirectAddr)
+	handler := NewShortenerHandler(l, mockService, redirectAddr)
 
 	router := chi.NewRouter()
 	router.Post("/", handler.ShortenURL)
@@ -81,7 +84,7 @@ func TestHandler_ShortenURL(t *testing.T) {
 func TestHandler_ResolveURL(t *testing.T) {
 	mockService := new(MockService)
 	redirectAddr := "http://localhost:8080"
-	handler := NewShortenerHandler(mockService, redirectAddr)
+	handler := NewShortenerHandler(l, mockService, redirectAddr)
 
 	router := chi.NewRouter()
 	router.Get("/{shortURL}", handler.ResolveURL)
