@@ -4,6 +4,8 @@ import (
 	"github.com/leary1337/url-shortener/internal/app/util"
 )
 
+var _ Shortener = (*ShortenerService)(nil)
+
 const ShortURLLength = 8
 
 type ShortenerService struct {
