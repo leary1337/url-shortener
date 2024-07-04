@@ -1,21 +1,18 @@
-package app
+package util
 
 import (
 	"crypto/rand"
 	"encoding/base64"
 )
 
-func GenerateRandomString(length int) (string, error) {
+func GenerateShortURL(length int) string {
 	// Создаем байтовый массив нужного размера
 	byteLength := (length*3 + 3) / 4
 	bytes := make([]byte, byteLength)
 
-	// Заполняем байтовый массив случайными байтами
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
-	}
+	_, _ = rand.Read(bytes)
 
 	// Кодируем в base64 и обрезаем до нужной длины
 	randomString := base64.URLEncoding.EncodeToString(bytes)
-	return randomString[:length], nil
+	return randomString[:length]
 }
