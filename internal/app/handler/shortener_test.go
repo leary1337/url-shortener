@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"github.com/leary1337/url-shortener/pkg/logger"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/leary1337/url-shortener/internal/app/service"
+	"github.com/leary1337/url-shortener/pkg/logger"
 )
 
 type MockService struct {
@@ -128,6 +128,73 @@ func TestHandler_ResolveURL(t *testing.T) {
 			}
 
 			mockService.AssertExpectations(t)
+		})
+	}
+}
+
+func TestShortenerHandler_ShortenURLJSON(t *testing.T) {
+	mockService := new(MockService)
+	redirectAddr := "http://localhost:8080"
+	handler := NewShortenerHandler(l, mockService, redirectAddr)
+
+	router := chi.NewRouter()
+	router.Post("/api/shorten", handler.ShortenURLJSON)
+
+	tests := []struct {
+		name           string
+		body           string
+		mockShortURL   string
+		mockErr        error
+		expectedStatus int
+		expectedBody   string
+		isJSONBody     bool
+	}{
+		{
+			name:           "successful shorten URL",
+			body:           `{"url":"https://example.com"}`,
+			mockShortURL:   "abcd1234",
+			expectedStatus: http.StatusCreated,
+			expectedBody:   `{"result":"http://localhost:8080/abcd1234"}`,
+			isJSONBody:     true,
+		},
+		{
+			name:           "empty body",
+			body:           ``,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   ``,
+			isJSONBody:     false,
+		},
+		{
+			name:           "invalid JSON body",
+			body:           `{invalid}`,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   ``,
+			isJSONBody:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.body != "" && tt.expectedStatus == http.StatusCreated {
+				mockService.On("ShortenURL", "https://example.com").Return(tt.mockShortURL)
+			}
+
+			req := httptest.NewRequest("POST", "/api/shorten", strings.NewReader(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+
+			router.ServeHTTP(rec, req)
+
+			assert.Equal(t, tt.expectedStatus, rec.Code)
+			if tt.isJSONBody {
+				assert.JSONEq(t, tt.expectedBody, rec.Body.String())
+			} else {
+				assert.Equal(t, tt.expectedBody, rec.Body.String())
+			}
+
+			if tt.expectedStatus == http.StatusCreated {
+				mockService.AssertExpectations(t)
+			}
 		})
 	}
 }
