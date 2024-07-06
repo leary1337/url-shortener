@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"github.com/leary1337/url-shortener/internal/app/middleware"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -38,6 +39,7 @@ func TestHandler_ShortenURL(t *testing.T) {
 	handler := NewShortenerHandler(l, mockService, redirectAddr)
 
 	router := chi.NewRouter()
+	router.Use(middleware.CompressMiddleware)
 	router.Post("/", handler.ShortenURL)
 
 	tests := []struct {
@@ -70,6 +72,7 @@ func TestHandler_ShortenURL(t *testing.T) {
 			}
 
 			req := httptest.NewRequest("POST", "/", strings.NewReader(tt.body))
+			req.Header.Set("Accept-Encoding", "gzip")
 			rec := httptest.NewRecorder()
 
 			router.ServeHTTP(rec, req)
@@ -88,6 +91,7 @@ func TestHandler_ResolveURL(t *testing.T) {
 	handler := NewShortenerHandler(l, mockService, redirectAddr)
 
 	router := chi.NewRouter()
+	router.Use(middleware.CompressMiddleware)
 	router.Get("/{shortURL}", handler.ResolveURL)
 
 	tests := []struct {
@@ -119,6 +123,7 @@ func TestHandler_ResolveURL(t *testing.T) {
 			mockService.On("ResolveURL", tt.shortURL).Return(tt.mockOriginalURL, tt.mockErr)
 
 			req := httptest.NewRequest("GET", fmt.Sprintf("/%s", tt.shortURL), nil)
+			req.Header.Set("Accept-Encoding", "gzip")
 			rec := httptest.NewRecorder()
 
 			router.ServeHTTP(rec, req)
@@ -139,6 +144,7 @@ func TestShortenerHandler_ShortenURLJSON(t *testing.T) {
 	handler := NewShortenerHandler(l, mockService, redirectAddr)
 
 	router := chi.NewRouter()
+	router.Use(middleware.CompressMiddleware)
 	router.Post("/api/shorten", handler.ShortenURLJSON)
 
 	tests := []struct {
