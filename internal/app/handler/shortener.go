@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -27,31 +26,35 @@ func NewShortenerHandler(l logger.Interface, service service.Shortener, redirect
 		redirectAddr: redirectAddr,
 	}
 }
-func (h *ShortenerHandler) RegisterRoutes(r chi.Router) {
-	r.Post("/", h.ShortenURL)
-	r.Get("/{shortURL}", h.ResolveURL)
-	r.Post("/api/shorten", h.ShortenURLJSON)
+func (s *ShortenerHandler) RegisterRoutes(r chi.Router) {
+	r.Post("/", s.ShortenURL)
+	r.Get("/{shortURL}", s.ResolveURL)
+	r.Post("/api/shorten", s.ShortenURLJSON)
 }
 
-func (h *ShortenerHandler) ShortenURL(w http.ResponseWriter, r *http.Request) {
+func (s *ShortenerHandler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil || len(body) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	originalURL := strings.TrimSpace(string(body))
-	shortURL := h.service.ShortenURL(originalURL)
+	shortURL, err := s.service.ShortenURL(originalURL)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte(fmt.Sprintf("%s/%s", h.redirectAddr, shortURL)))
+	_, err = w.Write([]byte(shortURL.GetFullShortURL(s.redirectAddr)))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *ShortenerHandler) ShortenURLJSON(w http.ResponseWriter, r *http.Request) {
+func (s *ShortenerHandler) ShortenURLJSON(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -65,9 +68,12 @@ func (h *ShortenerHandler) ShortenURLJSON(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	shortURL := fmt.Sprintf("%s/%s", h.redirectAddr, h.service.ShortenURL(srb.Url))
-
-	responseBody, err := json.Marshal(&entity.ShortenResponseBody{Result: shortURL})
+	shortURL, err := s.service.ShortenURL(srb.Url)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	responseBody, err := json.Marshal(&entity.ShortenResponseBody{Result: shortURL.GetFullShortURL(s.redirectAddr)})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -82,13 +88,13 @@ func (h *ShortenerHandler) ShortenURLJSON(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (h *ShortenerHandler) ResolveURL(w http.ResponseWriter, r *http.Request) {
+func (s *ShortenerHandler) ResolveURL(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "shortURL")
-	originalURL, err := h.service.ResolveURL(shortURL)
+	url, err := s.service.ResolveURL(shortURL)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	w.Header().Add("Location", originalURL)
+	w.Header().Add("Location", url.OriginalURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
