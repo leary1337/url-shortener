@@ -25,7 +25,7 @@ func RunServer(cfg *config.Config) error {
 	l := logger.New(cfg.Log.Level, os.Stdout)
 
 	//shortenerRepo := repo.NewShortenerMemory()
-	shortenerRepo := repo.NewShortenerFileStorage(cfg.FileStoragePath)
+	shortenerRepo := repo.NewShortenerFileMemory(cfg.FileStoragePath)
 	shortenerSrv := service.NewShortenerService(shortenerRepo)
 	shortenerHandler := handler.NewShortenerHandler(l, shortenerSrv, cfg.RedirectAddr)
 
