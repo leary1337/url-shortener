@@ -8,15 +8,15 @@ import (
 	"github.com/leary1337/url-shortener/internal/app/service"
 )
 
-var _ service.ShortenerRepo = (*ShortenerFileStorage)(nil)
+var _ service.ShortenerRepo = (*ShortenerFileMemory)(nil)
 
-type ShortenerFileStorage struct {
+type ShortenerFileMemory struct {
 	filePath string
 	m        *ShortenerMemory
 }
 
-func NewShortenerFileStorage(filePath string) *ShortenerFileStorage {
-	s := &ShortenerFileStorage{
+func NewShortenerFileMemory(filePath string) *ShortenerFileMemory {
+	s := &ShortenerFileMemory{
 		filePath: filePath,
 		m:        NewShortenerMemory(),
 	}
@@ -24,7 +24,7 @@ func NewShortenerFileStorage(filePath string) *ShortenerFileStorage {
 	return s
 }
 
-func (s *ShortenerFileStorage) Save(shortURL *entity.ShortURL) error {
+func (s *ShortenerFileMemory) Save(shortURL *entity.ShortURL) error {
 	// Save to memory
 	err := s.m.Save(shortURL)
 	if err != nil {
@@ -38,11 +38,11 @@ func (s *ShortenerFileStorage) Save(shortURL *entity.ShortURL) error {
 	return os.WriteFile(s.filePath, data, 0666)
 }
 
-func (s *ShortenerFileStorage) GetByShortURL(shortURL string) (*entity.ShortURL, error) {
+func (s *ShortenerFileMemory) GetByShortURL(shortURL string) (*entity.ShortURL, error) {
 	return s.m.GetByShortURL(shortURL)
 }
 
-func (s *ShortenerFileStorage) loadToMemory() {
+func (s *ShortenerFileMemory) loadToMemory() {
 	data, err := os.ReadFile(s.filePath)
 	if err != nil {
 		return
