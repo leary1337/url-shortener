@@ -22,6 +22,7 @@ func RunServer(cfg *config.Config) error {
 
 	r := chi.NewRouter()
 	r.Use(middleware.LoggingMiddleware(l))
+	r.Use(middleware.CompressMiddleware)
 	r.Route("/", func(r chi.Router) {
 		shortenerHandler.RegisterRoutes(r)
 	})
