@@ -2,6 +2,7 @@ package app
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 
@@ -14,7 +15,14 @@ import (
 )
 
 func RunServer(cfg *config.Config) error {
-	l := logger.New(cfg.Log.Level)
+	//logFile, err := os.OpenFile("shortener.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0664)
+	//if err != nil {
+	//	return err
+	//}
+	//defer func() {
+	//	_ = logFile.Close()
+	//}()
+	l := logger.New(cfg.Log.Level, os.Stdout)
 
 	shortenerRepo := repo.NewShortenerMemory()
 	shortenerSrv := service.NewShortenerService(shortenerRepo)

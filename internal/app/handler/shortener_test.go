@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -29,7 +30,7 @@ func (m *MockService) ResolveURL(shortURL string) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
-var l = logger.New("info")
+var l = logger.New("info", os.Stdout)
 
 func TestHandler_ShortenURL(t *testing.T) {
 	mockService := new(MockService)

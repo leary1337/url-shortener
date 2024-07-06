@@ -50,7 +50,7 @@ func (c *compressWriter) isSupportedContentType() bool {
 
 	supportedContentTypes := []string{
 		mime.TypeByExtension(".json"), // application/json
-		mime.TypeByExtension(".txt"),  // text/plain
+		mime.TypeByExtension(".html"), // text/html
 	}
 	for _, ct := range supportedContentTypes {
 		if strings.Contains(contentType, ct) {
