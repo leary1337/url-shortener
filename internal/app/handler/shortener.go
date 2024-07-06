@@ -42,6 +42,7 @@ func (h *ShortenerHandler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	originalURL := strings.TrimSpace(string(body))
 	shortURL := h.service.ShortenURL(originalURL)
 
+	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write([]byte(fmt.Sprintf("%s/%s", h.redirectAddr, shortURL)))
 	if err != nil {

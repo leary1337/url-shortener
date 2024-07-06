@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -25,7 +26,7 @@ type Logger struct {
 var _ Interface = (*Logger)(nil)
 
 // New -.
-func New(level string) *Logger {
+func New(level string, w io.Writer) *Logger {
 	var l zerolog.Level
 
 	switch strings.ToLower(level) {
@@ -44,7 +45,7 @@ func New(level string) *Logger {
 	zerolog.SetGlobalLevel(l)
 
 	skipFrameCount := 3
-	logger := zerolog.New(os.Stdout).With().Timestamp().CallerWithSkipFrameCount(zerolog.CallerSkipFrameCount + skipFrameCount).Logger()
+	logger := zerolog.New(w).With().Timestamp().CallerWithSkipFrameCount(zerolog.CallerSkipFrameCount + skipFrameCount).Logger()
 
 	return &Logger{
 		logger: &logger,
