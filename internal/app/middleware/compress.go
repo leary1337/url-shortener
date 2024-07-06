@@ -11,8 +11,9 @@ import (
 // compressWriter реализует интерфейс http.ResponseWriter и позволяет прозрачно для сервера
 // сжимать передаваемые данные и выставлять правильные HTTP-заголовки
 type compressWriter struct {
-	w  http.ResponseWriter
-	zw *gzip.Writer
+	w              http.ResponseWriter
+	zw             *gzip.Writer
+	shouldCompress bool
 }
 
 func newCompressWriter(w http.ResponseWriter) *compressWriter {
@@ -27,12 +28,16 @@ func (c *compressWriter) Header() http.Header {
 }
 
 func (c *compressWriter) Write(p []byte) (int, error) {
-	return c.zw.Write(p)
+	if c.shouldCompress {
+		c.w.Header().Set("Content-Encoding", "gzip")
+		return c.zw.Write(p)
+	}
+	return c.w.Write(p)
 }
 
 func (c *compressWriter) WriteHeader(statusCode int) {
 	if statusCode < 300 && c.isSupportedContentType() {
-		c.w.Header().Set("Content-Encoding", "gzip")
+		c.shouldCompress = true
 	}
 	c.w.WriteHeader(statusCode)
 }
