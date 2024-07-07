@@ -40,7 +40,7 @@ func NewConfig() (*Config, error) {
 	flag.StringVar(&cfg.Addr, "a", DefaultServerAddr, "server address")
 	flag.StringVar(&cfg.RedirectAddr, "b", DefaultRedirectAddr, "redirect server address")
 	flag.StringVar(&cfg.FileStoragePath, "f", DefaultDBFileStoragePath, "file storage path")
-	flag.StringVar(&cfg.DSN, "d", DefaultDSN, "database dsn for postgres")
+	flag.StringVar(&cfg.DSN, "d", "", "database dsn for postgres")
 	flag.Parse()
 
 	if envRunAddr := os.Getenv("SERVER_ADDRESS"); envRunAddr != "" {
