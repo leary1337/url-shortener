@@ -31,7 +31,6 @@ const (
 	DefaultServerAddr        = `localhost:8080`
 	DefaultRedirectAddr      = `http://localhost:8080`
 	DefaultDBFileStoragePath = `/tmp/short-url-db.json`
-	DefaultDSN               = `postgres://postgres:postgres@localhost:5432/shortener`
 )
 
 func NewConfig() (*Config, error) {

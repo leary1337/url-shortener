@@ -52,8 +52,8 @@ func RunServer(cfg *config.Config) error {
 	} else {
 		shortenerRepo = repo.NewShortenerMemory()
 	}
-	shortenerSrv := service.NewShortenerService(shortenerRepo)
-	shortenerHandler := handler.NewShortenerHandler(l, shortenerSrv, cfg.RedirectAddr)
+	shortenerSrv := service.NewShortenerService(shortenerRepo, cfg.RedirectAddr)
+	shortenerHandler := handler.NewShortenerHandler(l, shortenerSrv)
 
 	r := chi.NewRouter()
 	r.Use(middleware.LoggingMiddleware(l))

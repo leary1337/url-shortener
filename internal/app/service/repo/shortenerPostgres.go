@@ -2,7 +2,9 @@ package repo
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/leary1337/url-shortener/internal/app/entity"
@@ -43,6 +45,33 @@ func (s *ShortenerPostgres) Save(ctx context.Context, shortURL *entity.ShortURL)
 	)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (s *ShortenerPostgres) SaveBatch(ctx context.Context, shortURLs []entity.ShortURL) error {
+	batch := &pgx.Batch{}
+	query := `INSERT INTO "shorturl" ("Id", "ShortURL", "OriginalURL") VALUES (@id, @short_url, @original_url)`
+	for _, url := range shortURLs {
+		batch.Queue(
+			query,
+			pgx.NamedArgs{
+				"id":           url.UUID,
+				"short_url":    url.ShortURL,
+				"original_url": url.OriginalURL,
+			},
+		)
+	}
+	r := s.pg.SendBatch(ctx, batch)
+	defer func() {
+		_ = r.Close()
+	}()
+
+	for _, url := range shortURLs {
+		_, err := r.Exec()
+		if err != nil {
+			return fmt.Errorf("unable to insert row (%v): %w", url, err)
+		}
 	}
 	return nil
 }

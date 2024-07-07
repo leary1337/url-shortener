@@ -2,18 +2,31 @@ package entity
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/google/uuid"
+
+	"github.com/leary1337/url-shortener/internal/app/util"
 )
 
-type ShortenRequestBody struct {
-	Url string `json:"url"`
-}
+type (
+	ShortenRequestBody struct {
+		Url string `json:"url"`
+	}
+	ShortenResponseBody struct {
+		Result string `json:"result"`
+	}
+)
 
-type ShortenResponseBody struct {
-	Result string `json:"result"`
-}
+type (
+	ShortenBatchRequestBody struct {
+		Id          string `json:"correlation_id"`
+		OriginalURL string `json:"original_url"`
+	}
+	ShortenBatchResponseBody struct {
+		Id       string `json:"correlation_id"`
+		ShortURL string `json:"short_url"`
+	}
+)
 
 type ShortURL struct {
 	UUID        uuid.UUID `json:"uuid"`
@@ -21,8 +34,14 @@ type ShortURL struct {
 	OriginalURL string    `json:"original_url"`
 }
 
-func (s *ShortURL) GetFullShortURL(addr string) string {
-	return fmt.Sprintf("%s/%s", addr, s.ShortURL)
+const ShortURLLength = 8
+
+func NewShortURL(originalURL, addr string) *ShortURL {
+	return &ShortURL{
+		UUID:        uuid.New(),
+		ShortURL:    util.GenerateShortURL(addr, ShortURLLength),
+		OriginalURL: originalURL,
+	}
 }
 
 func (s *ShortURL) MarshalJSON() ([]byte, error) {

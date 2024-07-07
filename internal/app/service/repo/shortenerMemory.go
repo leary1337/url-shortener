@@ -28,6 +28,15 @@ func (m *ShortenerMemory) Save(ctx context.Context, shortURL *entity.ShortURL) e
 	return nil
 }
 
+func (m *ShortenerMemory) SaveBatch(ctx context.Context, shortURLs []entity.ShortURL) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, url := range shortURLs {
+		m.store[url.ShortURL] = url
+	}
+	return nil
+}
+
 func (m *ShortenerMemory) GetByShortURL(ctx context.Context, shortURL string) (*entity.ShortURL, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
