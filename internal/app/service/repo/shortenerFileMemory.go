@@ -31,16 +31,22 @@ func (s *ShortenerFileMemory) Save(ctx context.Context, shortURL *entity.ShortUR
 	if err != nil {
 		return err
 	}
+	// Save to file
+	return s.saveToFile()
+}
 
-	data, err := json.Marshal(s.m.GetAll())
+func (s *ShortenerFileMemory) SaveBatch(ctx context.Context, shortURLs []entity.ShortURL) error {
+	// Save to memory
+	err := s.m.SaveBatch(ctx, shortURLs)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.filePath, data, 0666)
+	// Save to file
+	return s.saveToFile()
 }
 
-func (s *ShortenerFileMemory) GetByShortURL(ctx context.Context, shortURL string) (*entity.ShortURL, error) {
-	return s.m.GetByShortURL(ctx, shortURL)
+func (s *ShortenerFileMemory) GetByShortURI(ctx context.Context, shortURL string) (*entity.ShortURL, error) {
+	return s.m.GetByShortURI(ctx, shortURL)
 }
 
 func (s *ShortenerFileMemory) loadToMemory() {
@@ -57,4 +63,12 @@ func (s *ShortenerFileMemory) loadToMemory() {
 	for _, url := range urls {
 		_ = s.m.Save(context.Background(), &url)
 	}
+}
+
+func (s *ShortenerFileMemory) saveToFile() error {
+	data, err := json.Marshal(s.m.GetAll())
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(s.filePath, data, 0666)
 }

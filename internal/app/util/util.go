@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 )
 
-func GenerateShortURL(length int) string {
+func RandomString(length int) string {
 	// Создаем байтовый массив нужного размера
 	byteLength := (length*3 + 3) / 4
 	bytes := make([]byte, byteLength)
