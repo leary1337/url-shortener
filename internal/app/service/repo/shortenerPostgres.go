@@ -29,7 +29,7 @@ func (s *ShortenerPostgres) Init(ctx context.Context) error {
 		`CREATE TABLE IF NOT EXISTS "shorturl"
 			(
 				"Id" uuid NOT NULL,
-				"ShortURL" text NOT NULL,
+				"ShortURI" text NOT NULL,
 				"OriginalURL" text NOT NULL,
 				PRIMARY KEY ("Id")
 			);`,
@@ -41,7 +41,7 @@ func (s *ShortenerPostgres) Save(ctx context.Context, shortURL *entity.ShortURL)
 	_, err := s.pg.Exec(
 		ctx,
 		`INSERT INTO "shorturl" VALUES ($1, $2, $3)`,
-		shortURL.UUID, shortURL.ShortURL, shortURL.OriginalURL,
+		shortURL.UUID, shortURL.ShortURI, shortURL.OriginalURL,
 	)
 	if err != nil {
 		return err
@@ -51,13 +51,13 @@ func (s *ShortenerPostgres) Save(ctx context.Context, shortURL *entity.ShortURL)
 
 func (s *ShortenerPostgres) SaveBatch(ctx context.Context, shortURLs []entity.ShortURL) error {
 	batch := &pgx.Batch{}
-	query := `INSERT INTO "shorturl" ("Id", "ShortURL", "OriginalURL") VALUES (@id, @short_url, @original_url)`
+	query := `INSERT INTO "shorturl" ("Id", "ShortURI", "OriginalURL") VALUES (@id, @short_uri, @original_url)`
 	for _, url := range shortURLs {
 		batch.Queue(
 			query,
 			pgx.NamedArgs{
 				"id":           url.UUID,
-				"short_url":    url.ShortURL,
+				"short_uri":    url.ShortURI,
 				"original_url": url.OriginalURL,
 			},
 		)
@@ -76,14 +76,14 @@ func (s *ShortenerPostgres) SaveBatch(ctx context.Context, shortURLs []entity.Sh
 	return nil
 }
 
-func (s *ShortenerPostgres) GetByShortURL(ctx context.Context, shortURL string) (*entity.ShortURL, error) {
+func (s *ShortenerPostgres) GetByShortURI(ctx context.Context, shortURL string) (*entity.ShortURL, error) {
 	row := s.pg.QueryRow(
 		ctx,
-		`SELECT "Id", "ShortURL", "OriginalURL" FROM "shorturl" WHERE "ShortURL" = $1::text`,
+		`SELECT "Id", "ShortURI", "OriginalURL" FROM "shorturl" WHERE "ShortURI" = $1::text`,
 		shortURL,
 	)
 	var url entity.ShortURL
-	err := row.Scan(&url.UUID, &url.ShortURL, &url.OriginalURL)
+	err := row.Scan(&url.UUID, &url.ShortURI, &url.OriginalURL)
 	if err != nil {
 		return nil, err
 	}

@@ -45,8 +45,8 @@ func (s *ShortenerFileMemory) SaveBatch(ctx context.Context, shortURLs []entity.
 	return s.saveToFile()
 }
 
-func (s *ShortenerFileMemory) GetByShortURL(ctx context.Context, shortURL string) (*entity.ShortURL, error) {
-	return s.m.GetByShortURL(ctx, shortURL)
+func (s *ShortenerFileMemory) GetByShortURI(ctx context.Context, shortURL string) (*entity.ShortURL, error) {
+	return s.m.GetByShortURI(ctx, shortURL)
 }
 
 func (s *ShortenerFileMemory) loadToMemory() {

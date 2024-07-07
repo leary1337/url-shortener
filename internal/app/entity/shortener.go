@@ -2,6 +2,7 @@ package entity
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/google/uuid"
 
@@ -30,38 +31,38 @@ type (
 
 type ShortURL struct {
 	UUID        uuid.UUID `json:"uuid"`
-	ShortURL    string    `json:"short_url"`
+	ShortURI    string    `json:"short_uri"`
 	OriginalURL string    `json:"original_url"`
 }
 
 const ShortURLLength = 8
 
-func NewShortURL(originalURL, addr string) *ShortURL {
+func NewShortURL(originalURL string) *ShortURL {
 	return &ShortURL{
 		UUID:        uuid.New(),
-		ShortURL:    util.GenerateShortURL(addr, ShortURLLength),
+		ShortURI:    util.RandomString(ShortURLLength),
 		OriginalURL: originalURL,
 	}
 }
 
 func (s *ShortURL) MarshalJSON() ([]byte, error) {
-	type Alias ShortURL // Создаем алиас для структуры ShortURL
+	type Alias ShortURL // Создаем алиас для структуры ShortURI
 	return json.Marshal(&struct {
 		UUID string `json:"uuid"`
 		*Alias
 	}{
 		UUID:  s.UUID.String(),
-		Alias: (*Alias)(s), // Используем алиас для встраивания всех полей ShortURL
+		Alias: (*Alias)(s), // Используем алиас для встраивания всех полей ShortURI
 	})
 }
 
 func (s *ShortURL) UnmarshalJSON(data []byte) error {
-	type Alias ShortURL // Создаем алиас для структуры ShortURL
+	type Alias ShortURL // Создаем алиас для структуры ShortURI
 	aux := &struct {
 		UUID string `json:"uuid"`
 		*Alias
 	}{
-		Alias: (*Alias)(s), // Используем алиас для встраивания всех полей ShortURL
+		Alias: (*Alias)(s), // Используем алиас для встраивания всех полей ShortURI
 	}
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
@@ -69,4 +70,8 @@ func (s *ShortURL) UnmarshalJSON(data []byte) error {
 	var err error
 	s.UUID, err = uuid.Parse(aux.UUID) // Преобразование строки обратно в UUID
 	return err
+}
+
+func (s *ShortURL) GetShortURL(addr string) string {
+	return fmt.Sprintf("%s/%s", addr, s.ShortURI)
 }

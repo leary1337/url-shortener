@@ -17,24 +17,24 @@ func NewShortenerService(repo ShortenerRepo, addr string) *ShortenerService {
 	return &ShortenerService{repo: repo, redirectAddr: addr}
 }
 
-func (s *ShortenerService) ShortenURL(ctx context.Context, originalURL string) (*entity.ShortURL, error) {
-	url := entity.NewShortURL(originalURL, s.redirectAddr)
+func (s *ShortenerService) ShortenURL(ctx context.Context, originalURL string) (string, error) {
+	url := entity.NewShortURL(originalURL)
 	err := s.repo.Save(ctx, url)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return url, nil
+	return url.GetShortURL(s.redirectAddr), nil
 }
 
 func (s *ShortenerService) ShortenBatch(ctx context.Context, sb []entity.ShortenBatchRequestBody) ([]entity.ShortenBatchResponseBody, error) {
 	urls := make([]entity.ShortURL, 0, len(sb))
 	rb := make([]entity.ShortenBatchResponseBody, 0, len(sb))
 	for _, r := range sb {
-		url := entity.NewShortURL(r.OriginalURL, s.redirectAddr)
+		url := entity.NewShortURL(r.OriginalURL)
 		urls = append(urls, *url)
 		rb = append(rb, entity.ShortenBatchResponseBody{
 			Id:       r.Id,
-			ShortURL: url.ShortURL,
+			ShortURL: url.GetShortURL(s.redirectAddr),
 		})
 	}
 	err := s.repo.SaveBatch(ctx, urls)
@@ -44,10 +44,10 @@ func (s *ShortenerService) ShortenBatch(ctx context.Context, sb []entity.Shorten
 	return rb, nil
 }
 
-func (s *ShortenerService) ResolveURL(ctx context.Context, shortURL string) (*entity.ShortURL, error) {
-	url, err := s.repo.GetByShortURL(ctx, shortURL)
+func (s *ShortenerService) ResolveURL(ctx context.Context, shortURL string) (string, error) {
+	url, err := s.repo.GetByShortURI(ctx, shortURL)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return url, nil
+	return url.OriginalURL, nil
 }

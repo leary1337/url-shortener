@@ -24,12 +24,12 @@ type MockService struct {
 	mock.Mock
 }
 
-func (m *MockService) ShortenURL(ctx context.Context, originalURL string) (*entity.ShortURL, error) {
+func (m *MockService) ShortenURL(ctx context.Context, originalURL string) (string, error) {
 	args := m.Called(originalURL)
 	if args.Get(0) != nil {
-		return args.Get(0).(*entity.ShortURL), args.Error(1)
+		return args.Get(0).(string), args.Error(1)
 	}
-	return nil, args.Error(1)
+	return "", args.Error(1)
 }
 
 func (m *MockService) ShortenBatch(ctx context.Context, sb []entity.ShortenBatchRequestBody) ([]entity.ShortenBatchResponseBody, error) {
@@ -37,12 +37,12 @@ func (m *MockService) ShortenBatch(ctx context.Context, sb []entity.ShortenBatch
 	return args.Get(0).([]entity.ShortenBatchResponseBody), args.Error(1)
 }
 
-func (m *MockService) ResolveURL(ctx context.Context, shortURL string) (*entity.ShortURL, error) {
+func (m *MockService) ResolveURL(ctx context.Context, shortURL string) (string, error) {
 	args := m.Called(shortURL)
 	if args.Get(0) != nil {
-		return args.Get(0).(*entity.ShortURL), args.Error(1)
+		return args.Get(0).(string), args.Error(1)
 	}
-	return nil, args.Error(1)
+	return "", args.Error(1)
 }
 
 var l = logger.New("info", os.Stdout)
@@ -58,7 +58,7 @@ func TestHandler_ShortenURL(t *testing.T) {
 	tests := []struct {
 		name           string
 		body           string
-		mockShortURL   *entity.ShortURL
+		mockShortURL   string
 		mockErr        error
 		expectedStatus int
 		expectedBody   string
@@ -66,7 +66,7 @@ func TestHandler_ShortenURL(t *testing.T) {
 		{
 			name:           "successful shorten URL",
 			body:           "https://example.com",
-			mockShortURL:   &entity.ShortURL{ShortURL: "http://localhost:8080/abcd1234", OriginalURL: "https://example.com"},
+			mockShortURL:   "http://localhost:8080/abcd1234",
 			expectedStatus: http.StatusCreated,
 			expectedBody:   "http://localhost:8080/abcd1234",
 		},
@@ -109,7 +109,7 @@ func TestHandler_ResolveURL(t *testing.T) {
 	tests := []struct {
 		name             string
 		shortURL         string
-		mockShortURL     *entity.ShortURL
+		mockOriginalURL  string
 		mockErr          error
 		expectedStatus   int
 		expectedLocation string
@@ -117,7 +117,7 @@ func TestHandler_ResolveURL(t *testing.T) {
 		{
 			name:             "successful resolve URL",
 			shortURL:         "abcd1234",
-			mockShortURL:     &entity.ShortURL{ShortURL: "http://localhost:8080/abcd1234", OriginalURL: "https://example.com"},
+			mockOriginalURL:  "https://example.com",
 			expectedStatus:   http.StatusTemporaryRedirect,
 			expectedLocation: "https://example.com",
 		},
@@ -132,7 +132,7 @@ func TestHandler_ResolveURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockService.On("ResolveURL", tt.shortURL).Return(tt.mockShortURL, tt.mockErr)
+			mockService.On("ResolveURL", tt.shortURL).Return(tt.mockOriginalURL, tt.mockErr)
 
 			req := httptest.NewRequest("GET", fmt.Sprintf("/%s", tt.shortURL), nil)
 			req.Header.Set("Accept-Encoding", "gzip")
@@ -161,7 +161,7 @@ func TestShortenerHandler_ShortenURLJSON(t *testing.T) {
 	tests := []struct {
 		name           string
 		body           string
-		mockShortURL   *entity.ShortURL
+		mockShortURL   string
 		mockErr        error
 		expectedStatus int
 		expectedBody   string
@@ -170,7 +170,7 @@ func TestShortenerHandler_ShortenURLJSON(t *testing.T) {
 		{
 			name:           "successful shorten URL",
 			body:           `{"url":"https://example.com"}`,
-			mockShortURL:   &entity.ShortURL{ShortURL: "http://localhost:8080/abcd1234", OriginalURL: "https://example.com"},
+			mockShortURL:   "http://localhost:8080/abcd1234",
 			expectedStatus: http.StatusCreated,
 			expectedBody:   `{"result":"http://localhost:8080/abcd1234"}`,
 			isJSONBody:     true,

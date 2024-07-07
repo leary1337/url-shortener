@@ -8,15 +8,15 @@ import (
 
 type (
 	Shortener interface {
-		ShortenURL(ctx context.Context, originalURL string) (*entity.ShortURL, error)
+		ShortenURL(ctx context.Context, originalURL string) (string, error)
 		ShortenBatch(ctx context.Context, sb []entity.ShortenBatchRequestBody) ([]entity.ShortenBatchResponseBody, error)
-		ResolveURL(ctx context.Context, shortURL string) (*entity.ShortURL, error)
+		ResolveURL(ctx context.Context, shortURL string) (string, error)
 	}
 
 	ShortenerRepo interface {
 		Save(ctx context.Context, shortURL *entity.ShortURL) error
 		SaveBatch(ctx context.Context, shortURLs []entity.ShortURL) error
-		GetByShortURL(ctx context.Context, shortURL string) (*entity.ShortURL, error)
+		GetByShortURI(ctx context.Context, shortURL string) (*entity.ShortURL, error)
 	}
 )
 
