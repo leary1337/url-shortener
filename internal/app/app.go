@@ -24,10 +24,11 @@ func RunServer(cfg *config.Config) error {
 	//defer func() {
 	//	_ = logFile.Close()
 	//}()
+	ctx := context.Background()
 	l := logger.New(cfg.Log.Level, os.Stdout)
 
 	// Init Postgres db pool
-	dbPool, err := pgxpool.New(context.Background(), cfg.DSN)
+	dbPool, err := pgxpool.New(ctx, cfg.DSN)
 	if err != nil {
 		return err
 	}
@@ -37,8 +38,20 @@ func RunServer(cfg *config.Config) error {
 	pingSrv := service.NewPingService(pingRepo)
 	pingHandler := handler.NewPingHandler(l, pingSrv)
 
-	//shortenerRepo := repo.NewShortenerMemory()
-	shortenerRepo := repo.NewShortenerFileMemory(cfg.FileStoragePath)
+	var shortenerRepo service.ShortenerRepo
+	if cfg.DSN != "" {
+		pgRepo := repo.NewShortenerPostgres(dbPool)
+		// Create table if necessary
+		err = pgRepo.Init(ctx)
+		if err != nil {
+			return err
+		}
+		shortenerRepo = pgRepo
+	} else if cfg.FileStoragePath != "" {
+		shortenerRepo = repo.NewShortenerFileMemory(cfg.FileStoragePath)
+	} else {
+		shortenerRepo = repo.NewShortenerMemory()
+	}
 	shortenerSrv := service.NewShortenerService(shortenerRepo)
 	shortenerHandler := handler.NewShortenerHandler(l, shortenerSrv, cfg.RedirectAddr)
 

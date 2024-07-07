@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -22,7 +23,7 @@ type MockService struct {
 	mock.Mock
 }
 
-func (m *MockService) ShortenURL(originalURL string) (*entity.ShortURL, error) {
+func (m *MockService) ShortenURL(ctx context.Context, originalURL string) (*entity.ShortURL, error) {
 	args := m.Called(originalURL)
 	if args.Get(0) != nil {
 		return args.Get(0).(*entity.ShortURL), args.Error(1)
@@ -30,7 +31,7 @@ func (m *MockService) ShortenURL(originalURL string) (*entity.ShortURL, error) {
 	return nil, args.Error(1)
 }
 
-func (m *MockService) ResolveURL(shortURL string) (*entity.ShortURL, error) {
+func (m *MockService) ResolveURL(ctx context.Context, shortURL string) (*entity.ShortURL, error) {
 	args := m.Called(shortURL)
 	if args.Get(0) != nil {
 		return args.Get(0).(*entity.ShortURL), args.Error(1)

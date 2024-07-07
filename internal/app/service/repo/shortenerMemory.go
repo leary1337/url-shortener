@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"sync"
 
 	"github.com/leary1337/url-shortener/internal/app/entity"
@@ -20,14 +21,14 @@ func NewShortenerMemory() *ShortenerMemory {
 	}
 }
 
-func (m *ShortenerMemory) Save(shortURL *entity.ShortURL) error {
+func (m *ShortenerMemory) Save(ctx context.Context, shortURL *entity.ShortURL) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.store[shortURL.ShortURL] = *shortURL
 	return nil
 }
 
-func (m *ShortenerMemory) GetByShortURL(shortURL string) (*entity.ShortURL, error) {
+func (m *ShortenerMemory) GetByShortURL(ctx context.Context, shortURL string) (*entity.ShortURL, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	url, ok := m.store[shortURL]

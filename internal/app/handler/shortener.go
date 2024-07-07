@@ -39,7 +39,7 @@ func (s *ShortenerHandler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	originalURL := strings.TrimSpace(string(body))
-	shortURL, err := s.service.ShortenURL(originalURL)
+	shortURL, err := s.service.ShortenURL(r.Context(), originalURL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -68,7 +68,7 @@ func (s *ShortenerHandler) ShortenURLJSON(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	shortURL, err := s.service.ShortenURL(srb.Url)
+	shortURL, err := s.service.ShortenURL(r.Context(), srb.Url)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -90,7 +90,7 @@ func (s *ShortenerHandler) ShortenURLJSON(w http.ResponseWriter, r *http.Request
 
 func (s *ShortenerHandler) ResolveURL(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "shortURL")
-	url, err := s.service.ResolveURL(shortURL)
+	url, err := s.service.ResolveURL(r.Context(), shortURL)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return

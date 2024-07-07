@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 
@@ -24,9 +25,9 @@ func NewShortenerFileMemory(filePath string) *ShortenerFileMemory {
 	return s
 }
 
-func (s *ShortenerFileMemory) Save(shortURL *entity.ShortURL) error {
+func (s *ShortenerFileMemory) Save(ctx context.Context, shortURL *entity.ShortURL) error {
 	// Save to memory
-	err := s.m.Save(shortURL)
+	err := s.m.Save(ctx, shortURL)
 	if err != nil {
 		return err
 	}
@@ -38,8 +39,8 @@ func (s *ShortenerFileMemory) Save(shortURL *entity.ShortURL) error {
 	return os.WriteFile(s.filePath, data, 0666)
 }
 
-func (s *ShortenerFileMemory) GetByShortURL(shortURL string) (*entity.ShortURL, error) {
-	return s.m.GetByShortURL(shortURL)
+func (s *ShortenerFileMemory) GetByShortURL(ctx context.Context, shortURL string) (*entity.ShortURL, error) {
+	return s.m.GetByShortURL(ctx, shortURL)
 }
 
 func (s *ShortenerFileMemory) loadToMemory() {
@@ -54,6 +55,6 @@ func (s *ShortenerFileMemory) loadToMemory() {
 	}
 
 	for _, url := range urls {
-		_ = s.m.Save(&url)
+		_ = s.m.Save(context.Background(), &url)
 	}
 }
