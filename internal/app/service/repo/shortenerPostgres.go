@@ -24,7 +24,7 @@ func NewShortenerPostgres(pool *pgxpool.Pool) *ShortenerPostgres {
 func (s *ShortenerPostgres) Init(ctx context.Context) error {
 	_, err := s.pg.Exec(
 		ctx,
-		`CREATE TABLE IF NOT EXISTS "ShortURL"
+		`CREATE TABLE IF NOT EXISTS "shorturl"
 			(
 				"Id" uuid NOT NULL,
 				"ShortURL" text NOT NULL,
@@ -38,7 +38,7 @@ func (s *ShortenerPostgres) Init(ctx context.Context) error {
 func (s *ShortenerPostgres) Save(ctx context.Context, shortURL *entity.ShortURL) error {
 	_, err := s.pg.Exec(
 		ctx,
-		`INSERT INTO "ShortURL" VALUES ($1, $2, $3)`,
+		`INSERT INTO "shorturl" VALUES ($1, $2, $3)`,
 		shortURL.UUID, shortURL.ShortURL, shortURL.OriginalURL,
 	)
 	if err != nil {
@@ -50,7 +50,7 @@ func (s *ShortenerPostgres) Save(ctx context.Context, shortURL *entity.ShortURL)
 func (s *ShortenerPostgres) GetByShortURL(ctx context.Context, shortURL string) (*entity.ShortURL, error) {
 	row := s.pg.QueryRow(
 		ctx,
-		`SELECT "Id", "ShortURL", "OriginalURL" FROM "ShortURL" WHERE "ShortURL" = $1::text`,
+		`SELECT "Id", "ShortURL", "OriginalURL" FROM "shorturl" WHERE "ShortURL" = $1::text`,
 		shortURL,
 	)
 	var url entity.ShortURL
