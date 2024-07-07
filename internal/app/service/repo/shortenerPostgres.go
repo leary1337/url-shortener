@@ -24,7 +24,7 @@ func NewShortenerPostgres(pool *pgxpool.Pool) *ShortenerPostgres {
 func (s *ShortenerPostgres) Init(ctx context.Context) error {
 	_, err := s.pg.Exec(
 		ctx,
-		`CREATE TABLE IF NOT EXISTS public."ShortURL"
+		`CREATE TABLE IF NOT EXISTS "ShortURL"
 			(
 				"Id" uuid NOT NULL,
 				"ShortURL" text NOT NULL,
