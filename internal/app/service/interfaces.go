@@ -1,6 +1,10 @@
 package service
 
-import "github.com/leary1337/url-shortener/internal/app/entity"
+import (
+	"context"
+
+	"github.com/leary1337/url-shortener/internal/app/entity"
+)
 
 type (
 	Shortener interface {
@@ -11,5 +15,15 @@ type (
 	ShortenerRepo interface {
 		Save(shortURL *entity.ShortURL) error
 		GetByShortURL(shortURL string) (*entity.ShortURL, error)
+	}
+)
+
+type (
+	Ping interface {
+		PingDB(ctx context.Context) error
+	}
+
+	PingRepo interface {
+		Ping(ctx context.Context) error
 	}
 )

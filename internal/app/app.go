@@ -1,10 +1,12 @@
 package app
 
 import (
+	"context"
 	"net/http"
 	"os"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/leary1337/url-shortener/internal/app/config"
 	"github.com/leary1337/url-shortener/internal/app/handler"
@@ -24,6 +26,17 @@ func RunServer(cfg *config.Config) error {
 	//}()
 	l := logger.New(cfg.Log.Level, os.Stdout)
 
+	// Init Postgres db pool
+	dbPool, err := pgxpool.New(context.Background(), cfg.DSN)
+	if err != nil {
+		return err
+	}
+	defer dbPool.Close()
+
+	pingRepo := repo.NewPingPostgres(dbPool)
+	pingSrv := service.NewPingService(pingRepo)
+	pingHandler := handler.NewPingHandler(l, pingSrv)
+
 	//shortenerRepo := repo.NewShortenerMemory()
 	shortenerRepo := repo.NewShortenerFileMemory(cfg.FileStoragePath)
 	shortenerSrv := service.NewShortenerService(shortenerRepo)
@@ -33,6 +46,7 @@ func RunServer(cfg *config.Config) error {
 	r.Use(middleware.LoggingMiddleware(l))
 	r.Use(middleware.CompressMiddleware)
 	r.Route("/", func(r chi.Router) {
+		pingHandler.RegisterRoutes(r)
 		shortenerHandler.RegisterRoutes(r)
 	})
 	return http.ListenAndServe(cfg.Addr, r)
